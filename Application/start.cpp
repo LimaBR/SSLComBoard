@@ -28,8 +28,10 @@ extern UART_HandleTypeDef huart2;
 UART_STM32 uart2(&huart2);
 
 Queue_STM32<std::vector<uint8_t>, 4> computerPktQueue("computerPktQueue");
+Queue_STM32<grSim_Robot_Command, 6> robotCommandQueue("robotCommandQueue");
+
 ComputerComms_ESP8266 componentReceiveFromComputer(&computerPktQueue, &uart2);
-ProtobufDecode componentProtobufDecode(&computerPktQueue);
+ProtobufDecode componentProtobufDecode(&computerPktQueue, &robotCommandQueue);
 
 void executableDispatch(void* _executable){
 	Executable* executable = static_cast<Executable*>(_executable);
