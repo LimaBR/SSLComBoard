@@ -10,7 +10,7 @@
 #include "Shared/nanopb/pb_decode.h"
 
 ProtobufDecode::ProtobufDecode(Queue<std::vector<uint8_t>>* inQueue, Queue<grSim_Robot_Command>* outQueue) :
-	Executable(Log::Level::Debug, "ProtobufDecode"),
+	Executable(Log::Level::Informational, "ProtobufDecode"),
 	inQueue(inQueue),
 	outQueue(outQueue)
 {
