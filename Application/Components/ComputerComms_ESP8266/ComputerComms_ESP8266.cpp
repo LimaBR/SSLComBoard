@@ -11,7 +11,7 @@
 #include "ComputerComms_ESP8266.hpp"
 
 ComputerComms_ESP8266::ComputerComms_ESP8266(Queue<std::vector<uint8_t>>* outQueue, UART* computerUart) :
-	Executable(Log::Level::Debug, "ReceiveFromComputer"),
+	Executable(Log::Level::Informational, "ReceiveFromComputer"),
 	outQueue(outQueue),
 	computerUart(computerUart)
 {
