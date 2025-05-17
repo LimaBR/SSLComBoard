@@ -15,8 +15,7 @@ Maintainer: Miguel Luis, Gregory Cristian and Matthieu Verdy
 */
 #include <cstring>
 #include <FreeRTOS.h>
-#include <Shared/SX1280Lib/SX1280.h>
-#include <Shared/SX1280Lib/SX1280-Hal.h>
+#include <Shared/SX1280Lib/SX1280.hpp>
 
 /*!
  * \brief Radio registers definition
