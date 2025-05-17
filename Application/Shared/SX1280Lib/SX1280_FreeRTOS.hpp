@@ -134,6 +134,8 @@ public:
      */
     virtual uint8_t GetDioStatus( void );
 
+    virtual Event WaitForEvent();
+
 protected:
 
     SPI_Master* RadioSpi;	//!< The SPI object used to communicate with the radio
@@ -145,12 +147,13 @@ protected:
     GPIO_Pin* DIO3;			//!< The pin connected to DIO3
 
     // TODO Comments
-    virtual void HardwareInit( );
+    void HardwareInit( );
     void onEvent(Event event);
 
 private:
     bool dioIrqEnabled = false;
     EventGroupHandle_t onIrqEventGroup;
+    QueueHandle_t eventQueue;
     void setDioIrqEnabled(bool enabled);
     void irqHandler(InterruptReason* reason);
     static void irqProcessTaskStatic(void* object);

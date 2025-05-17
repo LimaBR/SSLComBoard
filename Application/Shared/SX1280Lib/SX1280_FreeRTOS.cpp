@@ -51,12 +51,9 @@ void SX1280_FreeRTOS::HardwareInit( )
     onIrqEventGroup = xEventGroupCreate();
     TaskHandle_t irqProcessTaskHandle;
     xTaskCreate(irqProcessTaskStatic, "irqProcess", 256, this, 25, &irqProcessTaskHandle);
+    eventQueue = xQueueCreate(16, sizeof(Event));
 	DIO1->registerExtiCallback(this);
 	BUSY->registerExtiCallback(this);
-}
-
-void SX1280_FreeRTOS::onEvent(Event event) {
-
 }
 
 void SX1280_FreeRTOS::Reset( void )
@@ -255,13 +252,23 @@ uint8_t SX1280_FreeRTOS::GetDioStatus( void )
     return retval;
 }
 
+Radio::Event SX1280_FreeRTOS::WaitForEvent() {
+	Event event;
+	xQueueReceive(eventQueue, &event, portMAX_DELAY);
+	return event;
+}
+
+void SX1280_FreeRTOS::onEvent(Event event) {
+	xQueueSend(eventQueue, &event, 0);
+}
+
 void SX1280_FreeRTOS::setDioIrqEnabled(bool enabled) {
 	dioIrqEnabled = enabled;
 }
 
 void SX1280_FreeRTOS::irqHandler(InterruptReason *reason) {
 	BaseType_t xHigherPriorityTaskWoken = false;
-	if(reason == DIO1){
+	if(reason == DIO1 && dioIrqEnabled){
 		xEventGroupSetBitsFromISR(onIrqEventGroup, 1<<0, &xHigherPriorityTaskWoken);
 	}
 	portYIELD_FROM_ISR(xHigherPriorityTaskWoken);
@@ -276,6 +283,6 @@ void SX1280_FreeRTOS::irqProcessTaskStatic(void* object) {
 void SX1280_FreeRTOS::irqProcessTask() {
 	while(true){
 		xEventGroupWaitBits(onIrqEventGroup, 1<<0, true, true, portMAX_DELAY);
-		OnDioIrq();
+		ProcessIrqs();
 	}
 }

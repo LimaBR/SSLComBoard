@@ -925,44 +925,17 @@ void SX1280::SetInterruptMode( void )
     this->PollingMode = false;
 }
 
-void SX1280::OnDioIrq( void )
-{
-    /*
-     * When polling mode is activated, it is up to the application to call
-     * ProcessIrqs( ). Otherwise, the driver automatically calls ProcessIrqs( )
-     * on radio interrupt.
-     */
-    if( this->PollingMode == true )
-    {
-        this->IrqState = true;
-    }
-    else
-    {
-        this->ProcessIrqs( );
-    }
-}
-
 void SX1280::ProcessIrqs( void )
 {
     RadioPacketTypes_t packetType = PACKET_TYPE_NONE;
 
-    if( this->PollingMode == true )
-    {
-        if( this->IrqState == true )
-        {
-        	// TODO Disable IRQ
-            this->IrqState = false;
-            // TODO Enable IRQ
-        }
-        else
-        {
-            return;
-        }
-    }
-
     packetType = GetPacketType( true );
     uint16_t irqRegs = GetIrqStatus( );
     ClearIrqStatus( IRQ_RADIO_ALL );
+
+    if(irqRegs == IRQ_RADIO_NONE){
+    	return;
+    }
 
     switch( packetType )
     {

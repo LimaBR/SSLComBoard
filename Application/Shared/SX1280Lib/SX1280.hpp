@@ -1010,13 +1010,6 @@ protected:
     virtual void onEvent(Event event) = 0;
 
     /*!
-     * \brief DIOs interrupt callback
-     *
-     * \remark Called to handle all 3 DIOs pins
-     */
-    void OnDioIrq( void );
-
-    /*!
      * \brief Set the role of the radio during ranging operations
      *
      * \param [in]  role          Role of the radio
@@ -1655,6 +1648,8 @@ public:
      * \param [in]  preambleLength  The desired preamble length
      */
     void ForcePreambleLength( RadioPreambleLengths_t preambleLength );
+
+    virtual Event WaitForEvent() = 0;
 };
 
 #endif // __SX1280_H__

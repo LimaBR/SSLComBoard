@@ -142,7 +142,8 @@ typedef struct
 class Radio
 {
 public:
-    enum class Event : uint32_t{
+    enum class Event : int32_t{
+    	eventTimeout = -1,
     	txDone,
 		rxDone,
 		rxSyncWordDone,
@@ -265,8 +266,7 @@ public:
      */
     virtual uint16_t GetFirmwareVersion( void ) = 0;
 
-protected:
-    virtual void onEvent(Event event) = 0;
+    virtual Event WaitForEvent() = 0;
 };
 
 #endif // __RADIO_H__
