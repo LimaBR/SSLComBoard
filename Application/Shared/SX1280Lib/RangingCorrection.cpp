@@ -1,4 +1,4 @@
-#include "RangingCorrection.h"
+#include "RangingCorrection.hpp"
 
 #include "rangingCorrection/rangingCorrectionSF5BW0400.h"
 #include "rangingCorrection/rangingCorrectionSF6BW0400.h"
