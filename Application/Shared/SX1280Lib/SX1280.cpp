@@ -14,7 +14,6 @@ License: Revised BSD License, see LICENSE.TXT file include in the project
 Maintainer: Miguel Luis, Gregory Cristian and Matthieu Verdy
 */
 #include <cstring>
-#include <FreeRTOS.h>
 #include <Shared/SX1280Lib/SX1280.hpp>
 
 /*!
@@ -951,9 +950,9 @@ void SX1280::ProcessIrqs( void )
     {
         if( this->IrqState == true )
         {
-            portENTER_CRITICAL();
+        	// TODO Disable IRQ
             this->IrqState = false;
-            portEXIT_CRITICAL();
+            // TODO Enable IRQ
         }
         else
         {
@@ -964,20 +963,6 @@ void SX1280::ProcessIrqs( void )
     packetType = GetPacketType( true );
     uint16_t irqRegs = GetIrqStatus( );
     ClearIrqStatus( IRQ_RADIO_ALL );
-
-    // TODO Portar para FreeRTOS e HAL
-#if( SX1280_DEBUG == 1 )
-    DigitalOut TEST_PIN_1( D14 );
-    DigitalOut TEST_PIN_2( D15 );
-    for( int i = 0x8000; i != 0; i >>= 1 )
-    {
-        TEST_PIN_2 = 0;
-        TEST_PIN_1 = ( ( irqRegs & i ) != 0 ) ? 1 : 0;
-        TEST_PIN_2 = 1;
-    }
-    TEST_PIN_1 = 0;
-    TEST_PIN_2 = 0;
-#endif
 
     switch( packetType )
     {
