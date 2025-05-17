@@ -13,9 +13,9 @@ License: Revised BSD License, see LICENSE.TXT file include in the project
 
 Maintainer: Miguel Luis, Gregory Cristian and Matthieu Verdy
 */
-#include "sx1280-hal.h"
 #include <functional>
 #include <FreeRTOS.h>
+#include <Shared/SX1280Lib/SX1280-Hal.h>
 #include <task.h>
 #include <cstring>
 
@@ -23,17 +23,14 @@ Maintainer: Miguel Luis, Gregory Cristian and Matthieu Verdy
  * \brief Used to block execution waiting for low state on radio busy pin.
  *        Essentially used in SPI communications
  */
-#define WaitOnBusy( )          for(uint8_t val=1; val; BUSY->read(&val));
+#define WaitOnBusy( )          for(uint8_t val=1; val; BUSY->read(&val));	//TODO interrupt
 
 // This code handles cases where assert_param is undefined
 #ifndef assert_param
 #define assert_param( ... )
 #endif
 
-SX1280Hal::SX1280Hal( SPI_Master* pSpiMaster, GPIO_Pin* pNssPin,
-			GPIO_Pin* pBusyPin, GPIO_Pin* pIrqPin, GPIO_Pin* pRstPin,
-			RadioCallbacks_t *callbacks ) :
-			SX1280( callbacks ),
+SX1280_FreeRTOS::SX1280_FreeRTOS( SPI_Master* pSpiMaster, GPIO_Pin* pNssPin, GPIO_Pin* pBusyPin, GPIO_Pin* pIrqPin, GPIO_Pin* pRstPin) :
 			RadioSpi(pSpiMaster),
 			RadioNss( pNssPin ),
 			RadioReset( pRstPin ),
@@ -43,27 +40,26 @@ SX1280Hal::SX1280Hal( SPI_Master* pSpiMaster, GPIO_Pin* pNssPin,
 
 }
 
-SX1280Hal::~SX1280Hal( void )
+SX1280_FreeRTOS::~SX1280_FreeRTOS( void )
 {
 
 };
 
-void SX1280Hal::SpiInit( void )
+void SX1280_FreeRTOS::HardwareInit( )
 {
-    RadioNss->set();
-}
-
-void SX1280Hal::IoIrqInit( DioIrqHandler irqHandler )
-{
-    assert_param( RadioSpi != NULL );
-    SpiInit( );
+	RadioNss->set();
     onIrqEventGroup = xEventGroupCreate();
     TaskHandle_t irqProcessTaskHandle;
     xTaskCreate(irqProcessTaskStatic, "irqProcess", 256, this, 25, &irqProcessTaskHandle);
 	DIO1->registerExtiCallback(this);
+	BUSY->registerExtiCallback(this);
 }
 
-void SX1280Hal::Reset( void )
+void SX1280_FreeRTOS::onEvent(Event event) {
+
+}
+
+void SX1280_FreeRTOS::Reset( void )
 {
 	setDioIrqEnabled( false );
     vTaskDelay( 20 );
@@ -74,7 +70,7 @@ void SX1280Hal::Reset( void )
     setDioIrqEnabled( true );
 }
 
-void SX1280Hal::Wakeup( void )
+void SX1280_FreeRTOS::Wakeup( void )
 {
 	setDioIrqEnabled( false );
 
@@ -96,7 +92,7 @@ void SX1280Hal::Wakeup( void )
     setDioIrqEnabled( true );
 }
 
-void SX1280Hal::WriteCommand( RadioCommands_t command, uint8_t *buffer, uint16_t size )
+void SX1280_FreeRTOS::WriteCommand( RadioCommands_t command, uint8_t *buffer, uint16_t size )
 {
     WaitOnBusy( );
 
@@ -118,7 +114,7 @@ void SX1280Hal::WriteCommand( RadioCommands_t command, uint8_t *buffer, uint16_t
     }
 }
 
-void SX1280Hal::ReadCommand( RadioCommands_t command, uint8_t *buffer, uint16_t size )
+void SX1280_FreeRTOS::ReadCommand( RadioCommands_t command, uint8_t *buffer, uint16_t size )
 {
     WaitOnBusy( );
 
@@ -149,7 +145,7 @@ void SX1280Hal::ReadCommand( RadioCommands_t command, uint8_t *buffer, uint16_t 
     WaitOnBusy( );
 }
 
-void SX1280Hal::WriteRegister( uint16_t address, uint8_t *buffer, uint16_t size )
+void SX1280_FreeRTOS::WriteRegister( uint16_t address, uint8_t *buffer, uint16_t size )
 {
     WaitOnBusy( );
 
@@ -170,12 +166,12 @@ void SX1280Hal::WriteRegister( uint16_t address, uint8_t *buffer, uint16_t size 
     WaitOnBusy( );
 }
 
-void SX1280Hal::WriteRegister( uint16_t address, uint8_t value )
+void SX1280_FreeRTOS::WriteRegister( uint16_t address, uint8_t value )
 {
     WriteRegister( address, &value, 1 );
 }
 
-void SX1280Hal::ReadRegister( uint16_t address, uint8_t *buffer, uint16_t size )
+void SX1280_FreeRTOS::ReadRegister( uint16_t address, uint8_t *buffer, uint16_t size )
 {
     WaitOnBusy( );
 
@@ -198,7 +194,7 @@ void SX1280Hal::ReadRegister( uint16_t address, uint8_t *buffer, uint16_t size )
     WaitOnBusy( );
 }
 
-uint8_t SX1280Hal::ReadRegister( uint16_t address )
+uint8_t SX1280_FreeRTOS::ReadRegister( uint16_t address )
 {
     uint8_t data;
 
@@ -206,7 +202,7 @@ uint8_t SX1280Hal::ReadRegister( uint16_t address )
     return data;
 }
 
-void SX1280Hal::WriteBuffer( uint8_t offset, uint8_t *buffer, uint8_t size )
+void SX1280_FreeRTOS::WriteBuffer( uint8_t offset, uint8_t *buffer, uint8_t size )
 {
     WaitOnBusy( );
 
@@ -226,7 +222,7 @@ void SX1280Hal::WriteBuffer( uint8_t offset, uint8_t *buffer, uint8_t size )
     WaitOnBusy( );
 }
 
-void SX1280Hal::ReadBuffer( uint8_t offset, uint8_t *buffer, uint8_t size )
+void SX1280_FreeRTOS::ReadBuffer( uint8_t offset, uint8_t *buffer, uint8_t size )
 {
     WaitOnBusy( );
 
@@ -248,7 +244,7 @@ void SX1280Hal::ReadBuffer( uint8_t offset, uint8_t *buffer, uint8_t size )
     WaitOnBusy( );
 }
 
-uint8_t SX1280Hal::GetDioStatus( void )
+uint8_t SX1280_FreeRTOS::GetDioStatus( void )
 {
 	uint8_t inter =0;
 	uint8_t retval = 0;
@@ -259,11 +255,11 @@ uint8_t SX1280Hal::GetDioStatus( void )
     return retval;
 }
 
-void SX1280Hal::setDioIrqEnabled(bool enabled) {
+void SX1280_FreeRTOS::setDioIrqEnabled(bool enabled) {
 	dioIrqEnabled = enabled;
 }
 
-void SX1280Hal::irqHandler(InterruptReason *reason) {
+void SX1280_FreeRTOS::irqHandler(InterruptReason *reason) {
 	BaseType_t xHigherPriorityTaskWoken = false;
 	if(reason == DIO1){
 		xEventGroupSetBitsFromISR(onIrqEventGroup, 1<<0, &xHigherPriorityTaskWoken);
@@ -271,13 +267,13 @@ void SX1280Hal::irqHandler(InterruptReason *reason) {
 	portYIELD_FROM_ISR(xHigherPriorityTaskWoken);
 }
 
-void SX1280Hal::irqProcessTaskStatic(void* object) {
-	SX1280Hal* sx1280hal = static_cast<SX1280Hal*>(object);
+void SX1280_FreeRTOS::irqProcessTaskStatic(void* object) {
+	SX1280_FreeRTOS* sx1280hal = static_cast<SX1280_FreeRTOS*>(object);
 	sx1280hal->irqProcessTask();
 	vTaskDelete(NULL);
 }
 
-void SX1280Hal::irqProcessTask() {
+void SX1280_FreeRTOS::irqProcessTask() {
 	while(true){
 		xEventGroupWaitBits(onIrqEventGroup, 1<<0, true, true, portMAX_DELAY);
 		OnDioIrq();

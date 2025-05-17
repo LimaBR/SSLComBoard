@@ -16,26 +16,14 @@ Maintainer: Miguel Luis, Gregory Cristian and Matthieu Verdy
 #ifndef __SX1280_H__
 #define __SX1280_H__
 
-#include "radio.h"
 #include <inttypes.h>
+#include <Shared/SX1280Lib/Radio.h>
 #include <cmath>
 
 /*!
  * \brief Enables/disables driver debug features
  */
 #define SX1280_DEBUG                                0
-
-/*!
- * \brief Hardware IO IRQ callback function definition
- */
-class SX1280;
-typedef void ( SX1280::*DioIrqHandler )( void );
-
-/*!
- * \brief IRQ triggers callback function definition
- */
-class SX1280Hal;
-typedef void ( SX1280Hal::*Trigger )( void );
 
 /*!
  * \brief Provides the frequency of the chip running on the radio and the frequency step
@@ -957,13 +945,11 @@ public:
      * \param [in]  callbacks      Pointer to the callbacks structure defining
      *                             all callbacks function pointers
      */
-    SX1280( RadioCallbacks_t *callbacks ):
+    SX1280( ):
         // The class members are value-initialiazed in member-initilaizer list
-        Radio( callbacks ), OperatingMode( MODE_STDBY_RC ), PacketType( PACKET_TYPE_NONE ),
+        OperatingMode( MODE_STDBY_RC ), PacketType( PACKET_TYPE_NONE ),
         LoRaBandwidth( LORA_BW_1600 ), IrqState( false ), PollingMode( false )
     {
-        this->dioIrq        = &SX1280::OnDioIrq;
-
         // Warning: this constructor set the LoRaBandwidth member to a valid
         // value, but it is not related to the actual radio configuration!
     }
@@ -994,11 +980,6 @@ private:
     bool IrqState;
 
     /*!
-     * \brief Hardware DIO IRQ functions
-     */
-    DioIrqHandler dioIrq;
-
-    /*!
      * \brief Holds the polling state of the driver
      */
     bool PollingMode;
@@ -1024,13 +1005,9 @@ private:
     int32_t GetLoRaBandwidth( void );
 
 protected:
-    /*!
-     * \brief Sets a function to be triggered on radio interrupt
-     *
-     * \param [in]  irqHandler    A pointer to a function to be run on interrupt
-     *                            from the radio
-     */
-    virtual void IoIrqInit( DioIrqHandler irqHandler ) = 0;
+    // TODO Comments
+    virtual void HardwareInit( ) = 0;
+    virtual void onEvent(Event event) = 0;
 
     /*!
      * \brief DIOs interrupt callback

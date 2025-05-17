@@ -141,59 +141,26 @@ typedef struct
  */
 class Radio
 {
-protected:
-    /*!
-     * \brief Callback on Tx done interrupt
-     */
-    void ( *txDone )( void );
-
-    /*!
-     * \brief Callback on Rx done interrupt
-     */
-    void ( *rxDone )( void );
-
-    /*!
-     * \brief Callback on Rx SyncWord interrupt
-     */
-    void ( *rxSyncWordDone )( void );
-
-    /*!
-     * \brief Callback on Rx header received interrupt
-     */
-    void ( *rxHeaderDone )( void );
-
-    /*!
-     * \brief Callback on Tx timeout interrupt
-     */
-    void ( *txTimeout )( void );
-
-    /*!
-     * \brief Callback on Rx timeout interrupt
-     */
-    void ( *rxTimeout )( void );
-
-    /*!
-     * \brief Callback on Rx error interrupt
-     *
-     * \param [out] errCode       A code indicating the type of interrupt (SyncWord error or CRC error)
-     */
-    void ( *rxError )( IrqErrorCode_t errCode );
-
-    /*!
-     * \brief Callback on ranging done interrupt
-     *
-     * \param [out] val           A flag indicating the type of interrupt (Master/Slave and Valid/Error)
-     */
-    void ( *rangingDone )( IrqRangingCode_t val );
-
-    /*!
-     * \brief Callback on Channel Activity Detection done interrupt
-     *
-     * \param [out] cadFlag       Flag for channel activity detected or not
-     */
-    void ( *cadDone )( bool cadFlag );
-
 public:
+    enum class Event : uint32_t{
+    	txDone,
+		rxDone,
+		rxSyncWordDone,
+		rxHeaderDone,
+		txTimeout,
+		rxTimeout,
+		rxErrorHeader,
+		rxErrorSyncWord,
+		rxErrorCrc,
+		rxErrorRangingOnLora,
+		rangingDoneSlaveError,
+		rangingDoneSlaveValid,
+		rangingDoneMasterError,
+		rangingDoneMasterValid,
+		cadDoneTrue,
+		cadDoneFalse
+    };
+
     /*!
      * \brief Constructor for radio class
      * Sets the callbacks functions pointers
@@ -202,17 +169,9 @@ public:
      *                            to be called on radio interrupts
      *
      */
-    Radio( RadioCallbacks_t *callbacks )
+    Radio( )
     {
-        this->txDone = callbacks->txDone;
-        this->rxDone = callbacks->rxDone;
-        this->rxSyncWordDone = callbacks->rxSyncWordDone;
-        this->rxHeaderDone = callbacks->rxHeaderDone;
-        this->txTimeout = callbacks->txTimeout;
-        this->rxTimeout = callbacks->rxTimeout;
-        this->rxError = callbacks->rxError;
-        this->rangingDone = callbacks->rangingDone;
-        this->cadDone = callbacks->cadDone;
+
     }
     virtual ~Radio( void ){ };
 
@@ -305,6 +264,9 @@ public:
      * \retval      firmware      The firmware version
      */
     virtual uint16_t GetFirmwareVersion( void ) = 0;
+
+protected:
+    virtual void onEvent(Event event) = 0;
 };
 
 #endif // __RADIO_H__

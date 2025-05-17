@@ -13,10 +13,10 @@ License: Revised BSD License, see LICENSE.TXT file include in the project
 
 Maintainer: Miguel Luis, Gregory Cristian and Matthieu Verdy
 */
-#include "sx1280.h"
-#include "sx1280-hal.h"
 #include <cstring>
 #include <FreeRTOS.h>
+#include <Shared/SX1280Lib/SX1280.h>
+#include <Shared/SX1280Lib/SX1280-Hal.h>
 
 /*!
  * \brief Radio registers definition
@@ -41,14 +41,14 @@ const RadioRegisters_t RadioRegsInit[] = RADIO_INIT_REGISTERS_VALUE;
 void SX1280::Init( void )
 {
     Reset( );
-    IoIrqInit( dioIrq );
+    HardwareInit( );
     Wakeup( );
     //SetRegistersDefault( );
 }
 
 void SX1280::SetRegistersDefault( void )
 {
-    for( int16_t i = 0; i < sizeof( RadioRegsInit ) / sizeof( RadioRegisters_t ); i++ )
+    for( uint32_t i = 0; i < sizeof( RadioRegsInit ) / sizeof( RadioRegisters_t ); i++ )
     {
         WriteRegister( RadioRegsInit[i].Addr, RadioRegsInit[i].Value );
     }
@@ -271,9 +271,9 @@ void SX1280::SetModulationParams( ModulationParams_t *modParams )
             buf[2] = modParams->Params.Ble.ModulationShaping;
             break;
         case PACKET_TYPE_NONE:
-            buf[0] = NULL;
-            buf[1] = NULL;
-            buf[2] = NULL;
+            buf[0] = 0;
+            buf[1] = 0;
+            buf[2] = 0;
             break;
     }
     WriteCommand( RADIO_SET_MODULATIONPARAMS, buf, 3 );
@@ -307,8 +307,8 @@ void SX1280::SetPacketParams( PacketParams_t *packetParams )
             buf[2] = packetParams->Params.LoRa.PayloadLength;
             buf[3] = packetParams->Params.LoRa.Crc;
             buf[4] = packetParams->Params.LoRa.InvertIQ;
-            buf[5] = NULL;
-            buf[6] = NULL;
+            buf[5] = 0;
+            buf[6] = 0;
             break;
         case PACKET_TYPE_FLRC:
             buf[0] = packetParams->Params.Flrc.PreambleLength;
@@ -324,18 +324,18 @@ void SX1280::SetPacketParams( PacketParams_t *packetParams )
             buf[1] = packetParams->Params.Ble.CrcLength;
             buf[2] = packetParams->Params.Ble.BleTestPayload;
             buf[3] = packetParams->Params.Ble.Whitening;
-            buf[4] = NULL;
-            buf[5] = NULL;
-            buf[6] = NULL;
+            buf[4] = 0;
+            buf[5] = 0;
+            buf[6] = 0;
             break;
         case PACKET_TYPE_NONE:
-            buf[0] = NULL;
-            buf[1] = NULL;
-            buf[2] = NULL;
-            buf[3] = NULL;
-            buf[4] = NULL;
-            buf[5] = NULL;
-            buf[6] = NULL;
+            buf[0] = 0;
+            buf[1] = 0;
+            buf[2] = 0;
+            buf[3] = 0;
+            buf[4] = 0;
+            buf[5] = 0;
+            buf[6] = 0;
             break;
     }
     WriteCommand( RADIO_SET_PACKETPARAMS, buf, 7 );
@@ -992,69 +992,42 @@ void SX1280::ProcessIrqs( void )
                     {
                         if( ( irqRegs & IRQ_CRC_ERROR ) == IRQ_CRC_ERROR )
                         {
-                            if( rxError != NULL )
-                            {
-                                rxError( IRQ_CRC_ERROR_CODE );
-                            }
+                        	onEvent(Event::rxErrorCrc);
                         }
                         else if( ( irqRegs & IRQ_SYNCWORD_ERROR ) == IRQ_SYNCWORD_ERROR )
                         {
-                            if( rxError != NULL )
-                            {
-                                rxError( IRQ_SYNCWORD_ERROR_CODE );
-                            }
+                            onEvent(Event::rxErrorCrc);
                         }
                         else
                         {
-                            if( rxDone != NULL )
-                            {
-                                rxDone( );
-                            }
+                            onEvent(Event::rxDone);
                         }
                     }
                     if( ( irqRegs & IRQ_SYNCWORD_VALID ) == IRQ_SYNCWORD_VALID )
                     {
-                        if( rxSyncWordDone != NULL )
-                        {
-                            rxSyncWordDone( );
-                        }
+                        onEvent(Event::rxSyncWordDone);
                     }
                     if( ( irqRegs & IRQ_SYNCWORD_ERROR ) == IRQ_SYNCWORD_ERROR )
                     {
-                        if( rxError != NULL )
-                        {
-                            rxError( IRQ_SYNCWORD_ERROR_CODE );
-                        }
+                        onEvent(Event::rxErrorSyncWord);
                     }
                     if( ( irqRegs & IRQ_RX_TX_TIMEOUT ) == IRQ_RX_TX_TIMEOUT )
                     {
-                        if( rxTimeout != NULL )
-                        {
-                            rxTimeout( );
-                        }
+                    	onEvent(Event::rxTimeout);
                     }
                     if( ( irqRegs & IRQ_TX_DONE ) == IRQ_TX_DONE )
                     {
-                        if( txDone != NULL )
-                        {
-                            txDone( );
-                        }
+                        onEvent(Event::txDone);
                     }
                     break;
                 case MODE_TX:
                     if( ( irqRegs & IRQ_TX_DONE ) == IRQ_TX_DONE )
                     {
-                        if( txDone != NULL )
-                        {
-                            txDone( );
-                        }
+                    	onEvent(Event::txDone);
                     }
                     if( ( irqRegs & IRQ_RX_TX_TIMEOUT ) == IRQ_RX_TX_TIMEOUT )
                     {
-                        if( txTimeout != NULL )
-                        {
-                            txTimeout( );
-                        }
+                    	onEvent(Event::txTimeout);
                     }
                     break;
                 default:
@@ -1070,62 +1043,38 @@ void SX1280::ProcessIrqs( void )
                     {
                         if( ( irqRegs & IRQ_CRC_ERROR ) == IRQ_CRC_ERROR )
                         {
-                            if( rxError != NULL )
-                            {
-                                rxError( IRQ_CRC_ERROR_CODE );
-                            }
+                        	onEvent(Event::rxErrorCrc);
                         }
                         else
                         {
-                            if( rxDone != NULL )
-                            {
-                                rxDone( );
-                            }
+                        	onEvent(Event::rxDone);
                         }
                     }
                     if( ( irqRegs & IRQ_HEADER_VALID ) == IRQ_HEADER_VALID )
                     {
-                        if( rxHeaderDone != NULL )
-                        {
-                            rxHeaderDone( );
-                        }
+                    	onEvent(Event::rxHeaderDone);
                     }
                     if( ( irqRegs & IRQ_HEADER_ERROR ) == IRQ_HEADER_ERROR )
                     {
-                        if( rxError != NULL )
-                        {
-                            rxError( IRQ_HEADER_ERROR_CODE );
-                        }
+                    	onEvent(Event::rxErrorHeader);
                     }
                     if( ( irqRegs & IRQ_RX_TX_TIMEOUT ) == IRQ_RX_TX_TIMEOUT )
                     {
-                        if( rxTimeout != NULL )
-                        {
-                            rxTimeout( );
-                        }
+                    	onEvent(Event::rxTimeout);
                     }
                     if( ( irqRegs & IRQ_RANGING_SLAVE_REQUEST_DISCARDED ) == IRQ_RANGING_SLAVE_REQUEST_DISCARDED )
                     {
-                        if( rxError != NULL )
-                        {
-                            rxError( IRQ_RANGING_ON_LORA_ERROR_CODE );
-                        }
+                    	onEvent(Event::rxErrorRangingOnLora);
                     }
                     break;
                 case MODE_TX:
                     if( ( irqRegs & IRQ_TX_DONE ) == IRQ_TX_DONE )
                     {
-                        if( txDone != NULL )
-                        {
-                            txDone( );
-                        }
+                    	onEvent(Event::txDone);
                     }
                     if( ( irqRegs & IRQ_RX_TX_TIMEOUT ) == IRQ_RX_TX_TIMEOUT )
                     {
-                        if( txTimeout != NULL )
-                        {
-                            txTimeout( );
-                        }
+                    	onEvent(Event::txTimeout);
                     }
                     break;
                 case MODE_CAD:
@@ -1133,25 +1082,16 @@ void SX1280::ProcessIrqs( void )
                     {
                         if( ( irqRegs & IRQ_CAD_DETECTED ) == IRQ_CAD_DETECTED )
                         {
-                            if( cadDone != NULL )
-                            {
-                                cadDone( true );
-                            }
+                        	onEvent(Event::cadDoneFalse);
                         }
                         else
                         {
-                            if( cadDone != NULL )
-                            {
-                                cadDone( false );
-                            }
+                        	onEvent(Event::cadDoneTrue);
                         }
                     }
                     else if( ( irqRegs & IRQ_RX_TX_TIMEOUT ) == IRQ_RX_TX_TIMEOUT )
                     {
-                        if( rxTimeout != NULL )
-                        {
-                            rxTimeout( );
-                        }
+                    	onEvent(Event::rxTimeout);
                     }
                     break;
                 default:
@@ -1166,62 +1106,38 @@ void SX1280::ProcessIrqs( void )
                 case MODE_RX:
                     if( ( irqRegs & IRQ_RANGING_SLAVE_REQUEST_DISCARDED ) == IRQ_RANGING_SLAVE_REQUEST_DISCARDED )
                     {
-                        if( rangingDone != NULL )
-                        {
-                            rangingDone( IRQ_RANGING_SLAVE_ERROR_CODE );
-                        }
+                    	onEvent(Event::rangingDoneSlaveError);
                     }
                     if( ( irqRegs & IRQ_RANGING_SLAVE_REQUEST_VALID ) == IRQ_RANGING_SLAVE_REQUEST_VALID )
                     {
-                        if( rangingDone != NULL )
-                        {
-                            rangingDone( IRQ_RANGING_SLAVE_VALID_CODE );
-                        }
+                    	onEvent(Event::rangingDoneSlaveValid);
                     }
                     if( ( irqRegs & IRQ_RANGING_SLAVE_RESPONSE_DONE ) == IRQ_RANGING_SLAVE_RESPONSE_DONE )
                     {
-                        if( rangingDone != NULL )
-                        {
-                            rangingDone( IRQ_RANGING_SLAVE_VALID_CODE );
-                        }
+                    	onEvent(Event::rangingDoneSlaveError);
                     }
                     if( ( irqRegs & IRQ_RX_TX_TIMEOUT ) == IRQ_RX_TX_TIMEOUT )
                     {
-                        if( rangingDone != NULL )
-                        {
-                            rangingDone( IRQ_RANGING_SLAVE_ERROR_CODE );
-                        }
+                    	onEvent(Event::rangingDoneSlaveError);
                     }
                     if( ( irqRegs & IRQ_HEADER_VALID ) == IRQ_HEADER_VALID )
                     {
-                        if( rxHeaderDone != NULL )
-                        {
-                            rxHeaderDone( );
-                        }
+                    	onEvent(Event::rxHeaderDone);
                     }
                     if( ( irqRegs & IRQ_HEADER_ERROR ) == IRQ_HEADER_ERROR )
                     {
-                        if( rxError != NULL )
-                        {
-                            rxError( IRQ_HEADER_ERROR_CODE );
-                        }
+                    	onEvent(Event::rxErrorHeader);
                     }
                     break;
                 // MODE_TX indicates an IRQ on the Master side
                 case MODE_TX:
                     if( ( irqRegs & IRQ_RANGING_MASTER_TIMEOUT ) == IRQ_RANGING_MASTER_TIMEOUT )
                     {
-                        if( rangingDone != NULL )
-                        {
-                            rangingDone( IRQ_RANGING_MASTER_ERROR_CODE );
-                        }
+                    	onEvent(Event::rangingDoneMasterError);
                     }
                     if( ( irqRegs & IRQ_RANGING_MASTER_RESULT_VALID ) == IRQ_RANGING_MASTER_RESULT_VALID )
                     {
-                        if( rangingDone != NULL )
-                        {
-                            rangingDone( IRQ_RANGING_MASTER_VALID_CODE );
-                        }
+                    	onEvent(Event::rangingDoneMasterValid);
                     }
                     break;
                 default:

@@ -5,6 +5,7 @@
  *      Author: Gabriel
  */
 
+#include <Shared/SX1280Lib/SX1280-Hal.h>
 #include "start.h"
 #include <cstdio>
 #include "FreeRTOS.h"
@@ -21,7 +22,6 @@
 #include "Components/ProtobufDecode/ProtobufDecode.hpp"
 #include "Components/RobotOrchestrator/RobotOrchestrator.hpp"
 
-#include "Shared/SX1280Lib/sx1280-hal.h"
 
 GPIO_Pin_STM32 ledOrange(GPIOD, GPIO_PIN_13);
 GPIO_Pin_STM32 ledGreen(GPIOD, GPIO_PIN_12);
@@ -42,7 +42,7 @@ GPIO_Pin_STM32 sx1280_b_rst(SX1280_B_RST_GPIO_Port, SX1280_B_RST_Pin);
 GPIO_Pin_STM32 sx1280_b_rxen(SX1280_B_RXEN_GPIO_Port, SX1280_B_RXEN_Pin);
 GPIO_Pin_STM32 sx1280_b_txen(SX1280_B_TXEN_GPIO_Port, SX1280_B_TXEN_Pin);
 
-SX1280Hal sx1280_b(&spi1, &sx1280_b_nss, &sx1280_b_busy, &sx1280_b_irq, &sx1280_b_rst, nullptr);
+SX1280_FreeRTOS sx1280_b(&spi1, &sx1280_b_nss, &sx1280_b_busy, &sx1280_b_irq, &sx1280_b_rst);
 
 Queue_STM32<std::vector<uint8_t>, 4> computerPktQueue("computerPktQueue");
 Queue_STM32<grSim_Robot_Command, 6> robotCommandQueue("robotCommandQueue");

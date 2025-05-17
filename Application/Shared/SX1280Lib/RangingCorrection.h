@@ -1,7 +1,7 @@
 #ifndef __SX1280_RANGING_CORRECTION_H__
 #define __SX1280_RANGING_CORRECTION_H__
 
-#include "sx1280.h"
+#include <Shared/SX1280Lib/SX1280.h>
 
 namespace Sx1280RangingCorrection
 {

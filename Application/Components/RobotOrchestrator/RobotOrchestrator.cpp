@@ -7,7 +7,7 @@
 
 #include "RobotOrchestrator.hpp"
 
-RobotOrchestrator::RobotOrchestrator(Queue<grSim_Robot_Command>* inQueue, SX1280Hal* txRadio) :
+RobotOrchestrator::RobotOrchestrator(Queue<grSim_Robot_Command>* inQueue, SX1280* txRadio) :
 	Executable(Log::Level::Debug, "RobotOrchestrator"),
 	inQueue(inQueue),
 	txRadio(txRadio)

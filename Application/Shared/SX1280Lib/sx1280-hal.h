@@ -16,16 +16,16 @@ Maintainer: Miguel Luis and Gregory Cristian
 #ifndef __SX1280_HAL_H__
 #define __SX1280_HAL_H__
 
-#include "sx1280.h"
 #include <GPIO_Pin.hpp>
 #include <SPI_Master.hpp>
 #include <FreeRTOS.h>
 #include <event_groups.h>
+#include <Shared/SX1280Lib/SX1280.h>
 
 /*!
  * \brief Actual implementation of a SX1280 radio
  */
-class SX1280Hal : public SX1280, private Interruptible
+class SX1280_FreeRTOS : public SX1280, private Interruptible
 {
 public:
     /*!
@@ -33,16 +33,15 @@ public:
      *
      * Represents the physical connectivity with the radio and set callback functions on radio interrupts
      */
-    SX1280Hal( SPI_Master* pSpiMaster, GPIO_Pin* pNssPin,
-			GPIO_Pin* pBusyPin, GPIO_Pin* pIrqPin, GPIO_Pin* pRstPin,
-			RadioCallbacks_t *callbacks );
+    SX1280_FreeRTOS( SPI_Master* pSpiMaster, GPIO_Pin* pNssPin,
+			GPIO_Pin* pBusyPin, GPIO_Pin* pIrqPin, GPIO_Pin* pRstPin);
 
     /*!
      * \brief Destructor for SX1280Hal with UART support
      *
      * Take care of the correct destruction of the communication objects
      */
-    virtual ~SX1280Hal( void );
+    virtual ~SX1280_FreeRTOS( void );
 
     /*!
      * \brief Soft resets the radio
@@ -137,31 +136,20 @@ public:
 
 protected:
 
-    SPI_Master* RadioSpi;                       //!< The SPI object used to communicate with the radio
-    GPIO_Pin* RadioNss;                             //!< The pin connected to Radio chip select (active low)
-    GPIO_Pin* RadioReset;                           //!< The reset pin connected to the radio
-    GPIO_Pin* RadioCtsn;                            //!< The Clear To Send radio pin (active low)
+    SPI_Master* RadioSpi;	//!< The SPI object used to communicate with the radio
+    GPIO_Pin* RadioNss;		//!< The pin connected to Radio chip select (active low)
+    GPIO_Pin* RadioReset;	//!< The reset pin connected to the radio
+    GPIO_Pin* BUSY;			//!< The pin connected to BUSY
+    GPIO_Pin* DIO1;			//!< The pin connected to DIO1
+    GPIO_Pin* DIO2;			//!< The pin connected to DIO2
+    GPIO_Pin* DIO3;			//!< The pin connected to DIO3
 
-    GPIO_Pin* BUSY;                                 //!< The pin connected to BUSY
-    GPIO_Pin* DIO1;                                 //!< The pin connected to DIO1
-    GPIO_Pin* DIO2;                                 //!< The pin connected to DIO2
-    GPIO_Pin* DIO3;                                 //!< The pin connected to DIO3
-
-    /*!
-     * \brief Initializes SPI object used to communicate with the radio
-     */
-    virtual void SpiInit( void );
-
-    /*!
-     * \brief Sets the callback functions to be run on DIO1..3 interrupt
-     *
-     * \param [in]  irqHandler    A function pointer of the function to be run on every DIO interrupt
-     */
-    virtual void IoIrqInit( DioIrqHandler irqHandler );
+    // TODO Comments
+    virtual void HardwareInit( );
+    void onEvent(Event event);
 
 private:
     bool dioIrqEnabled = false;
-
     EventGroupHandle_t onIrqEventGroup;
     void setDioIrqEnabled(bool enabled);
     void irqHandler(InterruptReason* reason);

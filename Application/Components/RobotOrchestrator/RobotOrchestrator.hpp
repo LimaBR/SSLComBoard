@@ -8,20 +8,20 @@
 #ifndef COMPONENTS_ROBOTORCHESTRATOR_ROBOTORCHESTRATOR_HPP_
 #define COMPONENTS_ROBOTORCHESTRATOR_ROBOTORCHESTRATOR_HPP_
 
+#include <Shared/SX1280Lib/SX1280-Hal.h>
 #include "Executable.hpp"
 #include "Queue.hpp"
-#include "Shared/SX1280Lib/sx1280-hal.h"
 #include "Shared/nanopb/grSim_Commands.pb.h"
 
 class RobotOrchestrator : public Executable  {
 public:
-	RobotOrchestrator(Queue<grSim_Robot_Command>* inQueue, SX1280Hal* txRadio);
+	RobotOrchestrator(Queue<grSim_Robot_Command>* inQueue, SX1280* txRadio);
 	virtual ~RobotOrchestrator();
 	int32_t init();
 	int32_t execute();
 private:
 	Queue<grSim_Robot_Command>* inQueue;
-	SX1280Hal* txRadio;
+	SX1280* txRadio;
 };
 
 #endif /* COMPONENTS_ROBOTORCHESTRATOR_ROBOTORCHESTRATOR_HPP_ */
