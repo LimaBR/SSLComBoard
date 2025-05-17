@@ -8,7 +8,7 @@
 #ifndef COMPONENTS_ROBOTORCHESTRATOR_ROBOTORCHESTRATOR_HPP_
 #define COMPONENTS_ROBOTORCHESTRATOR_ROBOTORCHESTRATOR_HPP_
 
-#include <Shared/SX1280Lib/SX1280-Hal.h>
+#include <Shared/SX1280Lib/SX1280.hpp>
 #include "Executable.hpp"
 #include "Queue.hpp"
 #include "Shared/nanopb/grSim_Commands.pb.h"

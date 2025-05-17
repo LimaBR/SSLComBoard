@@ -5,7 +5,7 @@
  *      Author: Gabriel
  */
 
-#include <Shared/SX1280Lib/SX1280-Hal.h>
+#include <Shared/SX1280Lib/SX1280_FreeRTOS.hpp>
 #include "start.h"
 #include <cstdio>
 #include "FreeRTOS.h"
