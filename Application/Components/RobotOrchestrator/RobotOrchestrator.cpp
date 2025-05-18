@@ -50,9 +50,9 @@ int32_t RobotOrchestrator::init() {
     txRadio->SetModulationParams( &modulationParams );
     txRadio->SetPacketParams( &packetParams );
 
-    txRadio->SetRfFrequency( 2400000000UL );
+    txRadio->SetRfFrequency( 2395000000UL );
     txRadio->SetBufferBaseAddresses( 0x00, 0x00 );
-    txRadio->SetTxParams( 0, RADIO_RAMP_20_US );
+    txRadio->SetTxParams( 12, RADIO_RAMP_20_US );
     //uint16_t RxIrqMask = IRQ_RX_DONE | IRQ_RX_TX_TIMEOUT;
     //txRadio->SetDioIrqParams( RxIrqMask, RxIrqMask, IRQ_RADIO_NONE, IRQ_RADIO_NONE );
     //txRadio->SetRx( ( TickTime_t ) { RADIO_TICK_SIZE_1000_US, 100 } );
@@ -60,7 +60,10 @@ int32_t RobotOrchestrator::init() {
     txRadio->SetDioIrqParams( TxIrqMask, TxIrqMask, IRQ_RADIO_NONE, IRQ_RADIO_NONE );
     PacketStatus_t packetStatus;
     txRadio->GetPacketStatus(&packetStatus);
-    txRadio->SendPayload( (uint8_t*)"Hello World", 12, ( TickTime_t ){ RADIO_TICK_SIZE_1000_US, 100 } );
+    while(true){
+    	txRadio->SendPayload( (uint8_t*)"Hello World", 12, ( TickTime_t ){ RADIO_TICK_SIZE_1000_US, 100 } );
+    	txRadio->WaitForEvent();
+    }
     return 0;
 }
 
